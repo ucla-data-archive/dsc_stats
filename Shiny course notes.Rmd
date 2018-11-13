@@ -1,0 +1,18 @@
+---
+title: "Shiny course"
+author: "Ian May"
+date: "August 20, 2018"
+output: word_document
+---
+
+Always run the entire sript, not just 
+Watch out for commas
+
+#Anatomy of a Shiny app
+```{r}
+library(shiny)
+#load data before ui and server interactions1
+ui <- fluidPage()  #lay out user interface
+server <- function(input, output) {} # server function contains instructions needed to build app
+shinyApp(ui = ui, server = server) #creates the Shiny app object
+

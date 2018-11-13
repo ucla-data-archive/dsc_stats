@@ -1,0 +1,13 @@
+---
+title: "Untitled"
+author: "Ian May"
+date: "August 30, 2018"
+output: html_document
+---
+```{r}
+getwd()
+cbs <- load("C:/Users/Ian May/AppData/Local/Temp/Temp1_ICPSR_36195-V1.zip/ICPSR_36195/DS0001/36195-0001-Data.rda")
+cbs
+summary()
+```
+
