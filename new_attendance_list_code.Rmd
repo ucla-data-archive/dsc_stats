@@ -27,13 +27,18 @@ attend %>%
   summarize(number_people = n()) %>% 
   ggplot(aes(x=event, y=number_people, fill = role)) + 
     geom_col()+ theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) +labs(title = "Total Attendance Per Event", x= "Event Name", y="Attendance", fill = "Role")
+```
 
-# X Axis Breaks and Labels 
+{Code for pyramid plot (not complete)}
+ X Axis Breaks and Labels 
 brks <- seq(-15000000, 15000000, 5000000)
 lbls = c(seq(15, 0, -5), seq(5, 15, 5))
 
-# Plot
-ggplot(email_campaign_funnel, aes(x = Stage, y = Users, fill = Gender)) +   # Fill column
+ Plot
+attend %>% 
+  group_by(event, practice_topic, role) %>% 
+  summarize(number_people = n()) %>% 
+ggplot(email_campaign_funnel, aes(x = role, y = number_people, fill = Gender)) +   # Fill column
                               geom_bar(stat = "identity", width = .6) +   # draw the bars
                               scale_y_continuous(breaks = brks,   # Breaks
                                                  labels = lbls) + # Labels
@@ -43,5 +48,34 @@ ggplot(email_campaign_funnel, aes(x = Stage, y = Users, fill = Gender)) +   # Fi
                               theme(plot.title = element_text(hjust = .5), 
                                     axis.ticks = element_blank()) +   # Centre plot title
                               scale_fill_brewer(palette = "Dark2")  # Color palette
+
+
+```{r Attendance per date}
+attend %>% 
+  group_by(date, event, practice_topic) %>% 
+  summarize(number_date = n()) %>% 
+   ggplot(aes(x=date, y=number_date, fill= practice_topic)) + 
+    geom_col()+ theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) + labs(title = "Total Attendance Per Date", x = "Date", y="Attendance")
 ```
+
+{Code for R Date line graph , not complete}
+attend %>% 
+  group_by(date, event, practice_topic) %>% 
+  summarize(number_date = n()) %>% 
+  ggplot(aes_(x=date, y=number_date)+
+           geom_line())
+  
+
+  theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) + labs(title = "Total Attendance Per Date", x = "Date", y="Attendance")
+
+
+
+```{r Attendance per Role}
+attend %>% 
+  group_by(role) %>% 
+  summarize(number_role = n()) %>% 
+   ggplot(aes(x=reorder(role, -number_role), y=number_role)) + 
+    geom_col()+ theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) + labs(title = "Total Attendance Per Role", x = "Role", y="Attendance") +geom_text (aes(label=number_role), vjust= -0.5)
+```
+
 
