@@ -5,7 +5,7 @@ date: "December 4, 2018"
 output: html_document
 ---
 
-```{r setup, warning=FALSE}
+```{r setup, warning=FALSE, message=FALSE}
 library(RCurl)
 library(dplyr)
 library(ggplot2)
@@ -14,7 +14,7 @@ attend <- getURL("https://docs.google.com/spreadsheets/d/e/2PACX-1vTxBxubeoxL0jj
 attend <- read.csv(textConnection(attend))
 ```
 
-```{r name changes}
+```{r name changes, warning=FALSE}
 attend[attend==""] <- NA
 attend$event[attend$event == "Introducing Los Angeles Region Imagery Acquisition Consortium (LARIAC) Program at UCLA"] <- "Introducing LARIAC Program at UCLA"
 attend$event[attend$event == "Faculty Development Workshop: Teaching Transparent Methods of Empirical Research"] <- "Faculty Development: Methods of Empirical Research"
@@ -29,45 +29,14 @@ attend %>%
     geom_col()+ theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) +labs(title = "Total Attendance Per Event", x= "Event Name", y="Attendance", fill = "Role")
 ```
 
-{Code for pyramid plot (not complete)}
- X Axis Breaks and Labels 
-brks <- seq(-15000000, 15000000, 5000000)
-lbls = c(seq(15, 0, -5), seq(5, 15, 5))
-
- Plot
-attend %>% 
-  group_by(event, practice_topic, role) %>% 
-  summarize(number_people = n()) %>% 
-ggplot(email_campaign_funnel, aes(x = role, y = number_people, fill = Gender)) +   # Fill column
-                              geom_bar(stat = "identity", width = .6) +   # draw the bars
-                              scale_y_continuous(breaks = brks,   # Breaks
-                                                 labels = lbls) + # Labels
-                              coord_flip() +  # Flip axes
-                              labs(title="Email Campaign Funnel") +
-                              theme_tufte() +  # Tufte theme from ggfortify
-                              theme(plot.title = element_text(hjust = .5), 
-                                    axis.ticks = element_blank()) +   # Centre plot title
-                              scale_fill_brewer(palette = "Dark2")  # Color palette
-
 
 ```{r Attendance per date}
 attend %>% 
   group_by(date, event, practice_topic) %>% 
   summarize(number_date = n()) %>% 
    ggplot(aes(x=date, y=number_date, fill= practice_topic)) + 
-    geom_col()+ theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) + labs(title = "Total Attendance Per Date", x = "Date", y="Attendance")
+    geom_col()+ theme(axis.text.x = element_text(angle = 45, size = 8, hjust = 1)) + labs(title = "Total Attendance Per Date", x = "Date", y="Attendance")
 ```
-
-{Code for R Date line graph , not complete}
-attend %>% 
-  group_by(date, event, practice_topic) %>% 
-  summarize(number_date = n()) %>% 
-  ggplot(aes_(x=date, y=number_date)+
-           geom_line())
-  
-
-  theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) + labs(title = "Total Attendance Per Date", x = "Date", y="Attendance")
-
 
 
 ```{r Attendance per Role}
@@ -78,4 +47,31 @@ attend %>%
     geom_col()+ theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1)) + labs(title = "Total Attendance Per Role", x = "Role", y="Attendance") +geom_text (aes(label=number_role), vjust= -0.5)
 ```
 
+```{r ucla department attendance}
+ucla <- subset(attend, attend$institution =="ucla")
+ucla %>% 
+  group_by(dept) %>% 
+  summarize(number_dept = n()) %>%
+   ggplot(aes(x=reorder(dept, number_dept), y=number_dept)) + 
+    geom_bar(stat = "identity")+ 
+    theme(axis.text.x = element_text(size = 10, hjust = 1)) +
+    labs(title = "UCLA Department Attendance", x = "Dept", y="Attendance")+
+    geom_text (aes(label=number_dept), vjust= -0.5)+
+    coord_flip()
+```
+
+
+```{r}
+no_ucla <- subset(attend, attend$institution != "ucla" )
+g <- ggplot(no_ucla, aes(institution))
+g + geom_bar(aes(fill=role), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  labs(title="Attendance by Institution", 
+       subtitle="Including role")
+n <- as.data.frame(table(no_ucla$institution))
+n <- n[order(-n$Freq),]
+n[1:10,]
+n$Var1[n$Freq==1]
+
+```
 
