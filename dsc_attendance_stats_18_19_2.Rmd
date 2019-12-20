@@ -1,6 +1,6 @@
 ---
 title: "Data Science Center Stats 2019"
-author: 'Ian May UID: 304663145'
+author: 'Ian May'
 date: "October 2, 2019"
 output: pdf_document
 ---
@@ -9,6 +9,7 @@ library(readr)
 library(dplyr)
 library(stringr)
 library(tidyverse)
+library(xlsx)
 events<- read_csv("lc_events_20191001012339.csv")
 events$Attend.All.Days <- events$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:`
 events$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:` <- NULL
@@ -19,7 +20,10 @@ head(event)
 DSC <- event %>% filter(`Last Name` == "Jamison"|`First Name` == "Kristian" | `First Name` == "Leigh")
 
 event$`Status (Graduate Student, Faculty, Post Doc.)`[event$`Last Name` == "Jamison"|event$`First Name` == "Kristian" | event$`First Name` == "Leigh"] <- "DSC"
+```
 
+
+```{r functions practice}
 #Ian's practice using functions, Found online
 
 moveme <- function (invec, movecommand) {
@@ -54,7 +58,10 @@ moveme <- function (invec, movecommand) {
   }
   myVec
 }
+```
 
+
+```{r variable amend}
 event$Attend.All.Days <- event$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:`
 event$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:` <- NULL
 event$Organizer <- event$`Event Organizer`
@@ -69,9 +76,9 @@ event$Published <- event$`Publishing Status`
 event$`Publishing Status` <- NULL
 event$Registration.Enabled <- event$`Registration Enabled`
 event$`Registration Enabled` <- NULL
-event$First <- event$`First Name`
+event$First.Name <- event$`First Name`
 event$`First Name` <- NULL
-event$Last <- event$`Last Name`
+event$Last.Name <- event$`Last Name`
 event$`Last Name` <- NULL
 event$Phone <- event$`Phone Number`
 event$`Phone Number` <- NULL
@@ -99,43 +106,51 @@ event$Event.Status <- event$Status
 event$Status <- NULL
 event$What.would.you.like.to.get.out.of.this.course <- event$`What would you like to get out of this course?`
 event$`What would you like to get out of this course?` <- NULL
+```
 
+```{r apply function}
+
+names(event)
 #rearrange to reflect original dataset
 
-event <- event[moveme(names(event), "ID first; Start before Setup; End before Setup; Tags before Notes")] 
+event <- event[moveme(names(event), "ID first; Start before Setup; End before Setup")] 
+event <- event[moveme(names(event), "Tags before Notes; Attend.All.Days last")]
+event <- event[moveme(names(event), "Organizer after X10")]
 event <- event[moveme(names(event), "Published before Tags")]
 event <- event[moveme(names(event)," Registration.Enabled before Seats")]
-event <- event[moveme(names(event), "Confirm.Reg before Event.Status")] 
-event <- event[moveme(names(event), "Wait.Reg before Event.Status")]
-event <- event[moveme(names(event), "Actual.Attend before Event.Status")]
-event <- event[moveme(names(event), "Confirm.Attend before Event.Status")]
-event <- event[moveme(names(event), "Event.Status before Attended")]
-event <- event[moveme(names(event), "Phone before Barcode")]
-event <- event[moveme(names(event), "Attendee.Dept.program before Barcode")]
+event <- event[moveme(names(event), "Confirm.Reg after Seats")]
+event <- event[moveme(names(event), "Wait.Reg after Confirm.Reg")]
+event <- event[moveme(names(event), "Cancel.Reg after Wait.Reg")]
+event <- event[moveme(names(event), "Anticipated.Attend after Cancel.Reg")]
+event <- event[moveme(names(event), "Actual.Attend after Anticipated.Attend")]
+event <- event[moveme(names(event), "Confirm.Attend after Actual.Attend")]
+event <- event[moveme(names(event), "Event.Status after Confirm.Attend")]
+event <- event[moveme(names(event), "Email before Phone")]
+event <- event[moveme(names(event), "Barcode after Phone")]
+event <- event[moveme(names(event), "Created after Barcode")] 
+event <- event[moveme(names(event), "Attendee.Occupation after Created")] 
+event <- event[moveme(names(event), "Attendee.Dept.program before Email.opt.in?")]
 event <- event[moveme(names(event), "Email.opt.in? before What.would.you.like.to.get.out.of.this.course" )]
-event <- event[moveme(names(event), "Attend.All.Days last")]
 event <- event[moveme(names(event), "Note: before Attend.All.Days")]
 
-names(events)
+names(events) # Should reflect variable order in events
 names(event) 
-
-event <- event[c(1:10, 26, 11:18, 32, 33, 30, 31, 34, 35, 19, 20, 27, 28, 21, 22, 24, 25, 29, 23, 36, 37, 38, 39)]
-
-names(event) # Should reflect variable order in events
 
 dim(event) #Should be 300, 39
 
 rm(events) # when finished
 ```
 
+#New Object event2
+
 ```{r column eliminations and variable amendments}
 event2 <- event
-library(dplyr)
-
-
-event2 <- select(event2,-c(Setup, Teardown, Tags, X10, Notes, Organizer, Phone, Barcode, `Note:`, First, Last, Email))  #eliminate useless variables for analysis
+event2 <- select(event2,-c(Setup, Teardown, Tags, X10, Notes, Organizer, Phone, Barcode, `Note:`, First.Name, Last.Name, Email))  #eliminate useless/private variables for analysis
 #organizer deleted because only DSC related people were mentioned
+```
 
+
+```{r new variable duration}
 #Make Start time the same format as End.
 
 event2$Start <- strptime(event2$Start, "%I:%M %p") 
@@ -150,15 +165,22 @@ event2$Duration <- (event2$End - event2$Start)/60
 event2 <- event2[moveme(names(event2), "Duration before Start")]
 event2$Start <- NULL
 event2$End <- NULL
+```
 
+```{r}
 #Rename locations
 
 event2$Location[event2$Location == "WORKSHOPS: Data Science Center, 21536 Young Research Library"] <-"YRL - Data Science Center"
 event2$Location[event2$Location == "Research Library 11630F - RC Classroom"] <-"YRL- RC Classroom"
 event2$Location[event2$Location == "Young Research Library, West Classroom"] <-"YRL- West Classroom"
 event2$Location[event2$Location == "Research Library Conference Center"] <-"YRL- Conference Center"
+```
 
+```{r}
 #Create variables that show whether a programming language was taught or not
+
+#Rename "Building interactive data applications with Shiny" category
+event2$Categories[event2$Title == "Building interactive data applications with Shiny"] <- "Data, R (programming language)"
 
 event2$Rprogramming <- ifelse(event2$Categories == "R (programming language)" | event2$Categories == "Data, R (programming language)", 1, 0)
 
@@ -169,12 +191,11 @@ event2$OpenRefine <- ifelse(event2$Categories == "Data, Open Refine" | event2$Ca
 event2 <- event2[moveme(names(event2), "Rprogramming after Categories")]
 event2 <- event2[moveme(names(event2), "Python after Rprogramming")]
 event2 <- event2[moveme(names(event2), "OpenRefine after Python")]
+```
 
-#Amend Attended variable
 
-event2$Attended[event2$Attended == "-"] <- "No" #28 variables left blank
-
-#Simplify Occupation values
+```{r}
+#Simplify Attendee.Occupation values
 
 event2$Attendee.Occupation[event2$Attendee.Occupation == "doctoral student" | event2$Attendee.Occupation == "Graduate Student, PhD in Public Health" |  event2$Attendee.Occupation == "PhD Student"|event2$Attendee.Occupation == "Pos-Doc"| event2$Attendee.Occupation == "Post Doc"|event2$Attendee.Occupation == "Postgraduate resident"] <- "Post-Grad/PhD"
 event2$Attendee.Occupation[event2$Attendee.Occupation == "Faculty (Undergraduate)"] <- "Faculty"
@@ -187,36 +208,63 @@ event2$Attendee.Occupation[event2$Attendee.Occupation == "undergrad" | event2$At
 event2$Attendee.Occupation[event2$Attendee.Occupation == "Visiting Graduate Student" | event2$Attendee.Occupation == "visiting scholar" |  event2$Attendee.Occupation == "Visiting Schola" | event2$Attendee.Occupation == "Visiting Scholar/Post Doc"] <- "Visiting Scholar"
 event2$Attendee.Occupation[event2$Attendee.Occupation == "Alum of UCR"] <- "Visitor"
 event2$Attendee.Occupation[event2$Attendee.Dept.program == "UCLA Extension Applications Programming"] <- "UCLA Extension Student"
+```
 
-#Rename "Building interactive data applications with Shiny" category
-event2$Categories[event2$Title == "Building interactive data applications with Shiny"] <- "Data, R (programming language)"
+#Remove NA's
 
+```{r}
+# for loop counting missing variables
 for(i in 1:ncol(event2)){
   cat(sum(is.na(event2[,i])), i, "\n")
-}
+} 
 
-#eliminate variables with high levels of missing values ()
+# Audiences, Actual.Attend, What.would.you.like.to.get.out.of.this.course
+# Attend.All.Days have high levels of NA's (>30% of observations)
+
+#eliminate variables with high levels of missing values 
 event2 <- event2[,-c(8, 20, 28, 29)]
+```
 
-#eliminate na's from rest of dataset
 
+#Eliminate na's from rest of dataset
+
+```{r}
 #Description
 event2$Description[is.na(event2$Description)] <- "No Description"
 
+```
+
+```{r}
 #Categories
 event2$Categories[event2$Title == "Python Book Club"] <- "Python"
 event2$Categories[event2$Title == "Introduction to Tableau Data Visualization"] <- "Data"
 event2$Categories[event2$Title == "R Working Group - MURP"] <- "R (programming language)"
 event2$Categories[event2$Title == "Introduction to the Bash Shell Command Line"] <- "Bash"
+#Rename "Building interactive data applications with Shiny" category
+event2$Categories[event2$Title == "Building interactive data applications with Shiny"] <- "Data, R (programming language)"
+```
 
-#Python
-event2$Python[event2$Title == "Python Book Club"] <- 1
 
+```{r}
 #Location
 event2$Location[grep("Presentation Room", event2$Description)] <- "YRL- Presentation Room"
 event2$Location[grep("(FAIR)", event2$Description)] <- "Powell"
 event2$Location[grep("IDRE Portal", event2$Description)] <- "IDRE Portal"
+```
 
+```{r}
+#Duration variable NA's the result of Multi-day/weekly events 
+#Kept in case information needed, next object event3 will have variables eliminated
+t <- event2 %>% 
+  filter(is.na(Presenter))
+```
+
+```{r}
+#Presenter
+event2$Presenter[grep("ICPSR Data Fair 2018", event2$Title)] <- "ICPSR"
+```
+
+```{r}
 #Rprogramming, Python, Open Refine
 r <- c("Shiny", "R programming", "RStudio", "tidyr", "dplyr", "stringr", "ggplot2")
 event2$Rprogramming[event2$Description %in% r ] <- 1
@@ -225,31 +273,56 @@ py <- c("Jupyter", "Python")
 event2$Python[event2$Description %in% py] <- 1
 op_ref <- c("Open Refine")
 event2$OpenRefine[event2$Description %in% op_ref] <- 1
+event2$Python[event2$Title == "Python Book Club"] <- 1
 
-#Personal Data
-event2 <- event2 %>% filter(!is.na(Event.Status)) #eliminate 28 people who put down personal information
-event2 <- event2 %>% mutate_at(vars("Attendee.Occupation", "Attendee.Dept.program", "Email.opt.in?"), ~replace_na(.,"No"))
+#Repeat code from above because that eliminates NA's that pop up again for some reason
+event2$Rprogramming <- ifelse(event2$Categories == "R (programming language)" | event2$Categories == "Data, R (programming language)", 1, 0)
 
-#Duration
-#Eliminate day-long/multi-day events
-event2<-event2[!(event2$Title=="GIS Day"|event2$Title=="Love Data Week 2019"|event2$Title=="Software Carpentry Workshop - Python - DAY 1"|event2$Title=="Software Carpentry Workshop - Python - DAY 2"),]
+event2$Python <- ifelse(event2$Categories == "Carpentries, Python" | event2$Categories == "Python" | event2$Categories == "Data, Python", 1, 0)
 
+event2$OpenRefine <- ifelse(event2$Categories == "Data, Open Refine" | event2$Categories == "Open Refine", 1, 0)
+```
 
+```{r}
+#Email list
+event2$`Email.opt.in?`<- ifelse(event2$`Email.opt.in?` == "Yes", "Yes", "No")
+head(event2$`Email.opt.in?`)
+```
+
+```{r}
+#Attended
+event2$Attended[event2$Attended == "-"] <- "No" #28 variables left blank
 
 
 for(i in 1:ncol(event2)){
   cat(sum(is.na(event2[,i])), i, "\n")
-}
+} 
 
-#Only NA's left given to Python Fundamentals event
+#Python Fundamentals event has no presenter
+```
 
-event2$`Email.opt.in?`<- ifelse(event2$`Email.opt.in?` == "Yes", "Yes", "No")
-head(event2$`Email.opt.in?`)
+#New object event3
+
+```{r}
+event3 <- event2
+
+#Personal Data
+event3 <- event3 %>% filter(!is.na(Event.Status)) #eliminate 28 people who put down no personal information
+event3 <- event3 %>% mutate_at(vars("Attendee.Occupation", "Attendee.Dept.program", "Email.opt.in?"), ~replace_na(.,"No"))
+
+#Duration
+#Eliminate day-long/multi-day events
+event3<-event3[!(event3$Title=="GIS Day"|event3$Title=="Love Data Week 2019"|event3$Title=="Software Carpentry Workshop - Python - DAY 1"|event3$Title=="Software Carpentry Workshop - Python - DAY 2"),]
 
 # Questionable variables: Created, Published
-event3 <- select(event2, -c("Created"))
+event3 <- select(event3, -c("Created"))
 
-library(xlsx)
+for(i in 1:ncol(event3)){
+  cat(sum(is.na(event3[,i])), i, "\n")
+} 
+
+#Python Fundamentals event has no presenter
+
 write.xlsx(event3, file="clean_data.xlsx", 
-           sheetName="DSC_Stats_18_19")
+           sheetName="DSC_Stats_18_19") #Error pops up here
 ```
