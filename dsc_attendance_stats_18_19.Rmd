@@ -1,0 +1,112 @@
+---
+title: "Data Science Center Stats 2019"
+author: 'Ian May UID: 304663145'
+date: "October 2, 2019"
+output: pdf_document
+---
+```{r}
+library(readr)
+event <- read_csv("lc_events_20191001012339.csv")
+head(event)
+
+moveme <- function (invec, movecommand) {
+  movecommand <- lapply(strsplit(strsplit(movecommand, ";")[[1]], 
+                                 ",|\\s+"), function(x) x[x != ""])
+  movelist <- lapply(movecommand, function(x) {
+    Where <- x[which(x %in% c("before", "after", "first", 
+                              "last")):length(x)]
+    ToMove <- setdiff(x, Where)
+    list(ToMove, Where)
+  })
+  myVec <- invec
+  for (i in seq_along(movelist)) {
+    temp <- setdiff(myVec, movelist[[i]][[1]])
+    A <- movelist[[i]][[2]][1]
+    if (A %in% c("before", "after")) {
+      ba <- movelist[[i]][[2]][2]
+      if (A == "before") {
+        after <- match(ba, temp) - 1
+      }
+      else if (A == "after") {
+        after <- match(ba, temp)
+      }
+    }
+    else if (A == "first") {
+      after <- 0
+    }
+    else if (A == "last") {
+      after <- length(myVec)
+    }
+    myVec <- append(temp, values = movelist[[i]][[1]], after = after)
+  }
+  myVec
+}
+
+event$Attend.All.Days <- event$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:`
+event$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:` <- NULL
+event$Organizer <- event$`Event Organizer`
+event$`Event Organizer` <- NULL
+event$ID <- event$`Event ID`
+event$`Event ID` <- NULL
+event$start <- event$`Start Time`
+event$`Start Time` <- NULL
+event$end <- event$`End Time`
+event$`End Time`<- NULL
+event$published <- event$`Publishing Status`
+event$`Publishing Status` <- NULL
+event$registrations <- event$`Registration Enabled`
+event$`Registration Enabled` <- NULL
+event$first <- event$`First Name`
+event$`First Name` <- NULL
+event$last <- event$`Last Name`
+event$`Last Name` <- NULL
+event$phone <- event$`Phone Number`
+event$`Phone Number` <- NULL
+event$occupation <- event$`Status (Graduate Student, Faculty, Post Doc.)`
+event$`Status (Graduate Student, Faculty, Post Doc.)` <-NULL
+event$dept.program <- event$`Department or Program`
+event$`Department or Program` <- NULL
+event$`email.opt.in?` <-  event$`Can we email you about future Data Science Center events & workshops?`
+event$`Can we email you about future Data Science Center events & workshops?` <- NULL
+event$Tags <- event$`Internal Tags`
+event$`Internal Tags` <- NULL
+event$Confirm.Reg <- event$`Confirmed Registrations`
+event$`Confirmed Registrations` <-NULL
+event$Wait.Reg <- event$`Waiting-List Registrations`
+event$`Waiting-List Registrations`<- NULL
+event$Cancel.Reg <- event$`Cancelled Registrations`
+event$`Cancelled Registrations` <- NULL
+event$Anticipated.Attend <- event$`Anticipated Attendance`
+event$`Anticipated Attendance` <- NULL
+event$Actual.Attend <- event$`Actual Attendance`
+event$`Actual Attendance` <- NULL
+event$Confirm.Attend <- event$`Confirmed Attendance`
+event$`Confirmed Attendance` <- NULL
+event$Event.Status <- event$Status 
+event$Status <- NULL
+event$What.would.you.like.to.get.out.of.this.course <- event$`What would you like to get out of this course?`
+event$`What would you like to get out of this course?` <- NULL
+
+event <- event[moveme(names(event), "ID first; start before Setup; end before Setup; Tags before Notes")]
+event <- event[moveme(names(event), "published before Tags")]
+event <- event[moveme(names(event)," registrations before Seats")]
+event <- event[moveme(names(event), "Confirm.Reg before Event.Status")] 
+event <- event[moveme(names(event), "Wait.Reg before Event.Status")]
+event <- event[moveme(names(event), "Actual.Attend before Event.Status")]
+event <- event[moveme(names(event), "Confirm.Attend before Event.Status")]
+event <- event[moveme(names(event), "Event.Status before Attended")]
+event <- event[moveme(names(event), "first before Email")] 
+event <- event[moveme(names(event), "last before Email")]
+event <- event[moveme(names(event), "phone before Barcode")]
+event <- event[moveme(names(event), "occupation Before Barcode")] #issues
+event <- event[moveme(names(event), "dept.program before Barcode")] 
+event <- event[moveme(names(event), "email.opt.in? before What.would.you.like.to.get.out.of.this.course" )]
+event <- event[moveme(names(event), "Attend.All.Days last")]
+event <- event[moveme(names(event), "Note: before Attend.All.Days")]
+
+#Consider eliminating Internal Tags, Notes, Note:
+#Ask about Status
+
+dim(event) #Should be 300, 39
+```
+

@@ -1,0 +1,255 @@
+---
+title: "Data Science Center Stats 2019"
+author: 'Ian May UID: 304663145'
+date: "October 2, 2019"
+output: pdf_document
+---
+```{r cleaning}
+library(readr)
+library(dplyr)
+library(stringr)
+library(tidyverse)
+events<- read_csv("lc_events_20191001012339.csv")
+events$Attend.All.Days <- events$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:`
+events$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:` <- NULL
+
+event <- read_csv("lc_events_20191001012339.csv")
+head(event)
+
+DSC <- event %>% filter(`Last Name` == "Jamison"|`First Name` == "Kristian" | `First Name` == "Leigh")
+
+event$`Status (Graduate Student, Faculty, Post Doc.)`[event$`Last Name` == "Jamison"|event$`First Name` == "Kristian" | event$`First Name` == "Leigh"] <- "DSC"
+
+#Ian's practice using functions, Found online
+
+moveme <- function (invec, movecommand) {
+  movecommand <- lapply(strsplit(strsplit(movecommand, ";")[[1]], 
+                                 ",|\\s+"), function(x) x[x != ""])
+  movelist <- lapply(movecommand, function(x) {
+    Where <- x[which(x %in% c("before", "after", "first", 
+                              "last")):length(x)]
+    ToMove <- setdiff(x, Where)
+    list(ToMove, Where)
+  })
+  myVec <- invec
+  for (i in seq_along(movelist)) {
+    temp <- setdiff(myVec, movelist[[i]][[1]])
+    A <- movelist[[i]][[2]][1]
+    if (A %in% c("before", "after")) {
+      ba <- movelist[[i]][[2]][2]
+      if (A == "before") {
+        after <- match(ba, temp) - 1
+      }
+      else if (A == "after") {
+        after <- match(ba, temp) 
+      }
+    }
+    else if (A == "first") {
+      after <- 0
+    }
+    else if (A == "last") {
+      after <- length(myVec)
+    }
+    myVec <- append(temp, values = movelist[[i]][[1]], after = after)
+  }
+  myVec
+}
+
+event$Attend.All.Days <- event$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:`
+event$`This workshop is held over 2 weeks on 4 days (Oct 16-17 & 23-24, 2019) from 9am-noon. Can you attend attend all 4 days? Please select all that apply:` <- NULL
+event$Organizer <- event$`Event Organizer`
+event$`Event Organizer` <- NULL
+event$ID <- event$`Event ID`
+event$`Event ID` <- NULL
+event$Start <- event$`Start Time`
+event$`Start Time` <- NULL
+event$End <- event$`End Time`
+event$`End Time`<- NULL
+event$Published <- event$`Publishing Status`
+event$`Publishing Status` <- NULL
+event$Registration.Enabled <- event$`Registration Enabled`
+event$`Registration Enabled` <- NULL
+event$First <- event$`First Name`
+event$`First Name` <- NULL
+event$Last <- event$`Last Name`
+event$`Last Name` <- NULL
+event$Phone <- event$`Phone Number`
+event$`Phone Number` <- NULL
+event$Attendee.Occupation <- event$`Status (Graduate Student, Faculty, Post Doc.)`
+event$`Status (Graduate Student, Faculty, Post Doc.)` <-NULL
+event$Attendee.Dept.program <- event$`Department or Program`
+event$`Department or Program` <- NULL
+event$`Email.opt.in?` <-  event$`Can we email you about future Data Science Center events & workshops?`
+event$`Can we email you about future Data Science Center events & workshops?` <- NULL
+event$Tags <- event$`Internal Tags`
+event$`Internal Tags` <- NULL
+event$Confirm.Reg <- event$`Confirmed Registrations`
+event$`Confirmed Registrations` <-NULL
+event$Wait.Reg <- event$`Waiting-List Registrations`
+event$`Waiting-List Registrations`<- NULL
+event$Cancel.Reg <- event$`Cancelled Registrations`
+event$`Cancelled Registrations` <- NULL
+event$Anticipated.Attend <- event$`Anticipated Attendance`
+event$`Anticipated Attendance` <- NULL
+event$Actual.Attend <- event$`Actual Attendance`
+event$`Actual Attendance` <- NULL
+event$Confirm.Attend <- event$`Confirmed Attendance`
+event$`Confirmed Attendance` <- NULL
+event$Event.Status <- event$Status 
+event$Status <- NULL
+event$What.would.you.like.to.get.out.of.this.course <- event$`What would you like to get out of this course?`
+event$`What would you like to get out of this course?` <- NULL
+
+#rearrange to reflect original dataset
+
+event <- event[moveme(names(event), "ID first; Start before Setup; End before Setup; Tags before Notes")] 
+event <- event[moveme(names(event), "Published before Tags")]
+event <- event[moveme(names(event)," Registration.Enabled before Seats")]
+event <- event[moveme(names(event), "Confirm.Reg before Event.Status")] 
+event <- event[moveme(names(event), "Wait.Reg before Event.Status")]
+event <- event[moveme(names(event), "Actual.Attend before Event.Status")]
+event <- event[moveme(names(event), "Confirm.Attend before Event.Status")]
+event <- event[moveme(names(event), "Event.Status before Attended")]
+event <- event[moveme(names(event), "Phone before Barcode")]
+event <- event[moveme(names(event), "Attendee.Dept.program before Barcode")]
+event <- event[moveme(names(event), "Email.opt.in? before What.would.you.like.to.get.out.of.this.course" )]
+event <- event[moveme(names(event), "Attend.All.Days last")]
+event <- event[moveme(names(event), "Note: before Attend.All.Days")]
+
+names(events)
+names(event) 
+
+event <- event[c(1:10, 26, 11:18, 32, 33, 30, 31, 34, 35, 19, 20, 27, 28, 21, 22, 24, 25, 29, 23, 36, 37, 38, 39)]
+
+names(event) # Should reflect variable order in events
+
+dim(event) #Should be 300, 39
+
+rm(events) # when finished
+```
+
+```{r column eliminations and variable amendments}
+event2 <- event
+library(dplyr)
+
+
+event2 <- select(event2,-c(Setup, Teardown, Tags, X10, Notes, Organizer, Phone, Barcode, `Note:`, First, Last, Email))  #eliminate useless variables for analysis
+#organizer deleted because only DSC related people were mentioned
+
+#Make Start time the same format as End.
+
+event2$Start <- strptime(event2$Start, "%I:%M %p") 
+event2$Start <- format(event2$Start, format="%H:%M:%S")
+head(event2$Start, 10)
+library(hms)
+event2$Start <- as.hms(event2$Start)
+
+#Replace Start and End times with Event Duration
+
+event2$Duration <- (event2$End - event2$Start)/60  
+event2 <- event2[moveme(names(event2), "Duration before Start")]
+event2$Start <- NULL
+event2$End <- NULL
+
+#Rename locations
+
+event2$Location[event2$Location == "WORKSHOPS: Data Science Center, 21536 Young Research Library"] <-"YRL - Data Science Center"
+event2$Location[event2$Location == "Research Library 11630F - RC Classroom"] <-"YRL- RC Classroom"
+event2$Location[event2$Location == "Young Research Library, West Classroom"] <-"YRL- West Classroom"
+event2$Location[event2$Location == "Research Library Conference Center"] <-"YRL- Conference Center"
+
+#Create variables that show whether a programming language was taught or not
+
+event2$Rprogramming <- ifelse(event2$Categories == "R (programming language)" | event2$Categories == "Data, R (programming language)", 1, 0)
+
+event2$Python <- ifelse(event2$Categories == "Carpentries, Python" | event2$Categories == "Python" | event2$Categories == "Data, Python", 1, 0)
+
+event2$OpenRefine <- ifelse(event2$Categories == "Data, Open Refine" | event2$Categories == "Open Refine", 1, 0)
+
+event2 <- event2[moveme(names(event2), "Rprogramming after Categories")]
+event2 <- event2[moveme(names(event2), "Python after Rprogramming")]
+event2 <- event2[moveme(names(event2), "OpenRefine after Python")]
+
+#Amend Attended variable
+
+event2$Attended[event2$Attended == "-"] <- "No" #28 variables left blank
+
+#Simplify Occupation values
+
+event2$Attendee.Occupation[event2$Attendee.Occupation == "doctoral student" | event2$Attendee.Occupation == "Graduate Student, PhD in Public Health" |  event2$Attendee.Occupation == "PhD Student"|event2$Attendee.Occupation == "Pos-Doc"| event2$Attendee.Occupation == "Post Doc"|event2$Attendee.Occupation == "Postgraduate resident"] <- "Post-Grad/PhD"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "Faculty (Undergraduate)"] <- "Faculty"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "grad" | event2$Attendee.Occupation == "grad student" | event2$Attendee.Occupation == "Grad student" | event2$Attendee.Occupation == "graduate" | event2$Attendee.Occupation == "graduate student" | event2$Attendee.Occupation == "Graduate student" | event2$Attendee.Occupation == "Graduate Student" | event2$Attendee.Occupation == "Graduate Student" | event2$Attendee.Occupation == "Grad"| event2$Attendee.Occupation == "Graduate" | event2$Attendee.Occupation == "Masters student" ] <- "Grad Student"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "grad student & staff" | event2$Attendee.Occupation == "Grad Student & Staff" | event2$Attendee.Occupation == "Grad Student / Staff" | event2$Attendee.Occupation == "staff and grad student" ] <- "Grad Student/Staff"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "Graduate Student and Faculty"] <- "Grad Student/Faculty"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "staff" | event2$Attendee.Occupation == "Staff" |  event2$Attendee.Occupation == "STAFF" |  event2$Attendee.Occupation == "Academic Staff"] <- "Staff"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "student" | event2$Attendee.Occupation == "Student" ] <- "Student"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "undergrad" | event2$Attendee.Occupation == "Undergrad" |  event2$Attendee.Occupation == "UNDERGRAD" | event2$Attendee.Occupation == "Undergrad Junior"| event2$Attendee.Occupation == "undergraduate"|event2$Attendee.Occupation == "Undergraduate" |event2$Attendee.Occupation == "undergraduate student" | event2$Attendee.Occupation == "Undergraduate student" | event2$Attendee.Occupation == "Undergraduate Student"] <- "Undergrad"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "Visiting Graduate Student" | event2$Attendee.Occupation == "visiting scholar" |  event2$Attendee.Occupation == "Visiting Schola" | event2$Attendee.Occupation == "Visiting Scholar/Post Doc"] <- "Visiting Scholar"
+event2$Attendee.Occupation[event2$Attendee.Occupation == "Alum of UCR"] <- "Visitor"
+event2$Attendee.Occupation[event2$Attendee.Dept.program == "UCLA Extension Applications Programming"] <- "UCLA Extension Student"
+
+#Rename "Building interactive data applications with Shiny" category
+event2$Categories[event2$Title == "Building interactive data applications with Shiny"] <- "Data, R (programming language)"
+
+for(i in 1:ncol(event2)){
+  cat(sum(is.na(event2[,i])), i, "\n")
+}
+
+#eliminate variables with high levels of missing values ()
+event2 <- event2[,-c(8, 20, 28, 29)]
+
+#eliminate na's from rest of dataset
+
+#Description
+event2$Description[is.na(event2$Description)] <- "No Description"
+
+#Categories
+event2$Categories[event2$Title == "Python Book Club"] <- "Python"
+event2$Categories[event2$Title == "Introduction to Tableau Data Visualization"] <- "Data"
+event2$Categories[event2$Title == "R Working Group - MURP"] <- "R (programming language)"
+event2$Categories[event2$Title == "Introduction to the Bash Shell Command Line"] <- "Bash"
+
+#Python
+event2$Python[event2$Title == "Python Book Club"] <- 1
+
+#Location
+event2$Location[grep("Presentation Room", event2$Description)] <- "YRL- Presentation Room"
+event2$Location[grep("(FAIR)", event2$Description)] <- "Powell"
+event2$Location[grep("IDRE Portal", event2$Description)] <- "IDRE Portal"
+
+#Rprogramming, Python, Open Refine
+r <- c("Shiny", "R programming", "RStudio", "tidyr", "dplyr", "stringr", "ggplot2")
+event2$Rprogramming[event2$Description %in% r ] <- 1
+event2$Rprogramming[grep("R Working", event2$Title)] <- 1
+py <- c("Jupyter", "Python")
+event2$Python[event2$Description %in% py] <- 1
+op_ref <- c("Open Refine")
+event2$OpenRefine[event2$Description %in% op_ref] <- 1
+
+#Personal Data
+event2 <- event2 %>% filter(!is.na(Event.Status)) #eliminate 28 people who put down personal information
+event2 <- event2 %>% mutate_at(vars("Attendee.Occupation", "Attendee.Dept.program", "Email.opt.in?"), ~replace_na(.,"No"))
+
+#Duration
+#Eliminate day-long/multi-day events
+event2<-event2[!(event2$Title=="GIS Day"|event2$Title=="Love Data Week 2019"|event2$Title=="Software Carpentry Workshop - Python - DAY 1"|event2$Title=="Software Carpentry Workshop - Python - DAY 2"),]
+
+
+
+
+for(i in 1:ncol(event2)){
+  cat(sum(is.na(event2[,i])), i, "\n")
+}
+
+#Only NA's left given to Python Fundamentals event
+
+event2$`Email.opt.in?`<- ifelse(event2$`Email.opt.in?` == "Yes", "Yes", "No")
+head(event2$`Email.opt.in?`)
+
+# Questionable variables: Created, Published
+event3 <- select(event2, -c("Created"))
+
+library(xlsx)
+write.xlsx(event3, file="clean_data.xlsx", 
+           sheetName="DSC_Stats_18_19")
+```
